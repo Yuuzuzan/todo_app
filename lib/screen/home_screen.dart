@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -8,12 +12,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final String API_URL = "http://127.0.0.1:5001/todos";
+
+  Future<List> fetchTodoList() async {
+    final response = await http.get(Uri.parse(API_URL));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load album');
+    }
+  }
+
+  @override
+  initState() {
+    super.initState();
+    fetchTodoList().then(
+      (value) {
+        print(value);
+        setState(() {
+          TodoList = value;
+        });
+      },
+    );
+  }
+
   List TodoList = [];
   final task = TextEditingController();
 
   void addTodo() {
     setState(() {
-      TodoList.add(task.value.text);
+      TodoList.add({'title': task.text});
       task.clear;
     });
   }
@@ -58,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: ListView.builder(
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(TodoList[index]),
+                  title: Text(TodoList[index]['title']),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
                     onPressed: () => deleteTodo(index),
@@ -68,6 +96,8 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: TodoList.length,
             ))
           ],
+
+          // [{"completed":false,"id":1,"title":"New Todo"}, "ddd"]
         ),
       ),
     );
